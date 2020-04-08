@@ -1,6 +1,6 @@
 ######################################################
-# Areas protegidas
-#projeções
+# Areas protegidas - shapes das UCs + RPPNs
+# projeções
 ######################################################
 
 # Some projections codes: ####
@@ -33,7 +33,7 @@ uc_mun1 <- readOGR(dsn = "./Data/UC_mun", layer = "ucsmu")
 uc_mun2 <- readOGR(dsn = "./Data/UC_mun", layer = "ucsmi")
 uc_fed1 <- readOGR(dsn = "./Data/UC_Fed", layer = "ucsfus")
 uc_fed2 <- readOGR(dsn = "./Data/UC_Fed", layer = "ucsfi")
-uc_all<- readOGR(dsn = "./Data/UC_todas", layer = "ucstodas")
+uc_all <- readOGR(dsn = "./Data/UC_todas", layer = "ucstodas")
 
 
 #das RPPNs
@@ -57,41 +57,92 @@ crs(rppn_mg) #sirgas 2000
 crs(bhrd_lim)  # sirgas 2000
 crs(munic) # Albers
 
-# Reprojections ####
-mg_mine_wgs84 <- spTransform(mg_mine, CRS("+proj=longlat +ellps=WGS84 +datum=WGS84 +no_defs"))
+# primeiro definir as projeçoes para os NA, aí já resolve
+proj4string(uc_est1) <- CRS("+proj=longlat +ellps=WGS84 +datum=WGS84 +no_defs")
+proj4string(uc_est2) <- CRS("+proj=longlat +ellps=WGS84 +datum=WGS84 +no_defs")
+proj4string(uc_mun1) <- CRS("+proj=longlat +ellps=WGS84 +datum=WGS84 +no_defs")
+proj4string(uc_mun2) <- CRS("+proj=longlat +ellps=WGS84 +datum=WGS84 +no_defs")
+proj4string(uc_fed1) <- CRS("+proj=longlat +ellps=WGS84 +datum=WGS84 +no_defs")
+proj4string(uc_fed2) <- CRS("+proj=longlat +ellps=WGS84 +datum=WGS84 +no_defs")
+proj4string(uc_all) <- CRS("+proj=longlat +ellps=WGS84 +datum=WGS84 +no_defs")
 
-es_mine_wgs84 <- spTransform(es_mine, CRS("+proj=longlat +ellps=WGS84 +datum=WGS84 +no_defs"))
+#proj4string(rppn_es) <- CRS("+proj=longlat +ellps=WGS84 +datum=WGS84 +no_defs")
+#crs(rppn_es) <- “"+proj=longlat +ellps=WGS84 +datum=WGS84 +no_defs"
+
+# Reprojections ####
+rppn_mg_wgs84 <- spTransform(rppn_mg, CRS("+proj=longlat +ellps=WGS84 +datum=WGS84 +no_defs"))
 
 bhrd_lim_wgs84 <- spTransform(bhrd_lim, CRS("+proj=longlat +ellps=WGS84 +datum=WGS84 +no_defs"))
 
 munic_wgs84 <- spTransform(munic, CRS("+proj=longlat +ellps=WGS84 +datum=WGS84 +no_defs"))
 
 # Checking coordinate system ####
-crs(mg_mine_wgs84) # ok
-crs(es_mine_wgs84) # ok
+crs(rppn_mg_wgs84) # ok
 crs(bhrd_lim_wgs84) # ok
 crs(munic_wgs84) # ok
 
 # Saving reprojections shapes ####
-writeOGR(mg_mine_wgs84,"./outputs/reproj_shp", "mg_mine_wgs84", driver = "ESRI Shapefile", overwrite_layer = TRUE)
-
-writeOGR(es_mine_wgs84,"./outputs/reproj_shp", "es_mine_wgs84", driver = "ESRI Shapefile", overwrite_layer = TRUE)
+writeOGR(rppn_mg_wgs84,"./outputs/reproj_shp", "rppn_mg_wgs84", driver = "ESRI Shapefile", overwrite_layer = TRUE)
 
 writeOGR(bhrd_lim_wgs84,"./outputs/reproj_shp", "bhrd_lim_wgs84", driver = "ESRI Shapefile", overwrite_layer = TRUE)
 
 writeOGR(munic_wgs84,"./outputs/reproj_shp", "munic_wgs84", driver = "ESRI Shapefile", overwrite_layer = TRUE)
 
 #testing the new shp saved ####
-par(mfrow = c(2, 2), mar = c(5, 5, 4, 1))
-mg <- readOGR(dsn = "./outputs/reproj_shp", layer = "mg_mine_wgs84")
-plot(mg, axes = TRUE)
-
-es <- readOGR(dsn = "./outputs/reproj_shp", layer = "es_mine_wgs84")
-plot(es, axes = TRUE)
 
 bhrd <- readOGR(dsn = "./outputs/reproj_shp", layer = "bhrd_lim_wgs84")
 plot(bhrd, axes = TRUE)
 
 munic <- readOGR(dsn = "./outputs/reproj_shp", layer = "munic_wgs84") # did not plot correctly the municipalities
 plot(bhrd, axes = TRUE)
-dev.off()
+
+
+# Step 1: Clipping polygons####
+library(rgeos) # required for clips
+
+# clipping
+clip_uc_est1_bhrd_lim <- gIntersection(uc_est1, bhrd_lim_wgs84, byid = TRUE, drop_lower_td = TRUE)
+clip_uc_est2_bhrd_lim <- gIntersection(uc_est2, bhrd_lim_wgs84, byid = TRUE, drop_lower_td = TRUE)
+
+clip_uc_fed1_bhrd_lim <- gIntersection(uc_fed1, bhrd_lim_wgs84, byid = TRUE, drop_lower_td = TRUE)
+clip_uc_fed2_bhrd_lim <- gIntersection(uc_fed2, bhrd_lim_wgs84, byid = TRUE, drop_lower_td = TRUE)
+
+clip_uc_mun1_bhrd_lim <- gIntersection(uc_mun1, bhrd_lim_wgs84, byid = TRUE, drop_lower_td = TRUE)
+clip_uc_mun2_bhrd_lim <- gIntersection(uc_mun2, bhrd_lim_wgs84, byid = TRUE, drop_lower_td = TRUE)
+
+clip_uc_all_bhrd_lim <- gIntersection(uc_all, bhrd_lim_wgs84, byid = TRUE, drop_lower_td = TRUE)
+
+clip_rppn_mg_bhrd_lim <- gIntersection(rppn_mg_wgs84, bhrd_lim_wgs84, byid = TRUE, drop_lower_td = TRUE)
+
+clip_rppn_mg_bhrd_lim <- gIntersection(rppn_mg_wgs84, bhrd_lim_wgs84, byid = TRUE, drop_lower_td = TRUE)
+
+munic_wgs84
+# check clip
+
+
+plot(clip_uc_est1_bhrd_lim, col = 'blue')
+plot(clip_uc_est2_bhrd_lim, col = 'blue')
+
+plot(clip_uc_fed1_bhrd_lim, add = TRUE, col = 'red', axes = TRUE)
+plot(clip_uc_fed2_bhrd_lim, add = TRUE, col = 'red', axes = TRUE)
+
+plot(clip_uc_mun1_bhrd_lim, add = TRUE, col = 'green', axes = TRUE)
+plot(clip_uc_mun2_bhrd_lim, add = TRUE, col = 'green', axes = TRUE)
+
+plot(clip_mg_bhrd_munic, col = 'green')
+plot(clip_es_bhrd_munic, add = TRUE, col = 'orange', axes = TRUE)
+
+# save new shp ####
+# Test
+writeOGR(clip_mg_bhrd_lim, dsn = "./outputs", layer = "clip_mg_bhrd_lim", driver = "ESRI Shapefile", overwrite_layer = TRUE)
+writeOGR(clip_mg_bhrd_lim, dsn = "./outputs", layer = "clip", driver = "ESRI Shapefile", overwrite_layer = TRUE)
+writeOGR(clip_es_bhrd_lim, dsn = "./outputs", layer = "clip", driver = "ESRI Shapefile", overwrite_layer = TRUE)
+writeOGR(clip_mg_bhrd_munic, dsn = "./outputs", layer = "clip", driver = "ESRI Shapefile", overwrite_layer = TRUE)
+writeOGR(clip_es_bhrd_munic, dsn = "./outputs", layer = "clip", driver = "ESRI Shapefile", overwrite_layer = TRUE)
+
+# Remove unecessary files ####
+# good to get more space if you'll continue the analysis in the sequence
+rm(mg)
+rm(es)
+rm(bhrd)
+rm(munic)
