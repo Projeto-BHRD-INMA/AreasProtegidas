@@ -1,6 +1,6 @@
 ######################################################
 # Areas protegidas - shapes das UCs + RPPNs
-# projeções e corte para bacia
+# projeções e corte para bacia. saves new shapefiles
 ######################################################
 
 # Some projections codes: ####
