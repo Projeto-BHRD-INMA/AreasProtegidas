@@ -23,7 +23,7 @@
 library (sp)
 library(rgdal)
 library(raster)
-
+library(rgeos)
 
 # Loading shp file ####
 #das UCs
@@ -89,18 +89,10 @@ writeOGR(bhrd_lim_wgs84,"./outputs/reproj_shp", "bhrd_lim_wgs84", driver = "ESRI
 
 writeOGR(munic_wgs84,"./outputs/reproj_shp", "munic_wgs84", driver = "ESRI Shapefile", overwrite_layer = TRUE)
 
-#testing the new shp saved ####
-
-#bhrd <- readOGR(dsn = "./outputs/reproj_shp", layer = "bhrd_lim_wgs84")
-#plot(bhrd, axes = TRUE)
-#munic <- readOGR(dsn = "./outputs/reproj_shp", layer = "munic_wgs84") # did not plot correctly the municipalities
-#plot(bhrd, axes = TRUE)
-
 
 # Clipping polygons####
-library(rgeos) # required for clips
 
-# jeito 1
+# jeito 1 - esse jeito de clip é bom, mas o output tem dimensões diferentes do objeto inicial. aí para writeOGR dá problema.
 
 clip_uc_est1_bhrd_lim <- gIntersection(uc_est1, bhrd_lim_wgs84, byid = TRUE, drop_lower_td = TRUE)
 clip_uc_est2_bhrd_lim <- gIntersection(uc_est2, bhrd_lim_wgs84, byid = TRUE, drop_lower_td = TRUE)
@@ -108,33 +100,40 @@ clip_uc_est2_bhrd_lim <- gIntersection(uc_est2, bhrd_lim_wgs84, byid = TRUE, dro
 clip_uc_fed1_bhrd_lim <- gIntersection(uc_fed1, bhrd_lim_wgs84, byid = TRUE, drop_lower_td = TRUE)
 clip_uc_fed2_bhrd_lim <- gIntersection(uc_fed2, bhrd_lim_wgs84, byid = TRUE, drop_lower_td = TRUE)
 
-plot(clip_uc_est1_bhrd_limA, col = 'blue')
-plot(clip_uc_est2_bhrd_limA, add = TRUE, col = 'blue', axes = TRUE)
-plot(bhrd_lim_wgs84,add = TRUE, axes = TRUE)
+clip_uc_mun1_bhrd_lim <- gIntersection(uc_mun1, bhrd_lim_wgs84, byid = TRUE, drop_lower_td = TRUE)
+clip_uc_mun2_bhrd_lim <- gIntersection(uc_mun2, bhrd_lim_wgs84, byid = TRUE, drop_lower_td = TRUE)
 
-plot(clip_uc_est1_bhrd_limB, col = 'red')
-plot(clip_uc_est2_bhrd_limB, add = TRUE, col = 'red', axes = TRUE)
-plot(bhrd_lim_wgs84,add = TRUE, axes = TRUE)
+clip_uc_rppnMG_bhrd_lim <- gIntersection(rppn_mg_wgs84, bhrd_lim_wgs84, byid = TRUE, drop_lower_td = TRUE)
+#as rrpn do es o arq ta estranho e nao ta lendo. falta resolver isso.
 
-#um teste:
-clip_uc_est1_bhrd_limA <- gIntersection(uc_est1, bhrd_lim_wgs84, byid = TRUE, drop_lower_td = TRUE)
-clip_uc_est1_bhrd_limA <- SpatialPolygonsDataFrame(clip_uc_est1_bhrd_limA, uc_est1@data)
+clip_uc_all_bhrd_lim <- gIntersection(uc_all, bhrd_lim_wgs84, byid = TRUE, drop_lower_td = TRUE)
 
-writeOGR(spdf,"./outputs/clipped_shp", "clip_uc_est1_bhrd_limA", driver = "ESRI Shapefile", overwrite_layer = TRUE)
+#saving new (clipped) shapefiles ####
+#para conseguir writeOGR, tem que:
+# é uma solução feia, mas eu não sei fazer melhor. e tb nao sei automatizar. vou fazer manualmente para cada arquivo :(
+# Make a data frame that meets the requirements.
 
-# Make a data frame that meets the requirements above:
-df<- data.frame(id = getSpPPolygonsIDSlots(clip_uc_est1_bhrd_limA))
-row.names(df) <- getSpPPolygonsIDSlots(clip_uc_est1_bhrd_limA)
+#para UCs estaduais (est 1 - uso sustentável, 2 - proteção integral)
+df<- data.frame(id = getSpPPolygonsIDSlots(clip_uc_est1_bhrd_lim))
+row.names(df) <- getSpPPolygonsIDSlots(clip_uc_est1_bhrd_lim)
 # Make spatial polygon data frame
-spdf <- SpatialPolygonsDataFrame(clip_uc_est1_bhrd_limA, data =df)
+spdf <- SpatialPolygonsDataFrame(clip_uc_est1_bhrd_lim, data =df)
+crs(spdf) #to check projection.
 
-# Then don't forget to make sure the projection is correct
-# XXXX is your SRID
-
+#if wrong projection, then:
 proj4string(spdf) <- CRS("+proj=longlat +ellps=WGS84 +datum=WGS84 +no_defs")
 spdf <- spTransform(spdf , CRS("+proj=longlat +ellps=WGS84 +datum=WGS84 +no_defs"))
-print(spdf)
-print(uc_est1)
+
+writeOGR(spdf,"./outputs/clipped_shp", "clip_uc_est1_bhrd_lim", driver = "ESRI Shapefile", overwrite_layer = TRUE)
+
+df<- data.frame(id = getSpPPolygonsIDSlots(clip_uc_est2_bhrd_lim))
+row.names(df) <- getSpPPolygonsIDSlots(clip_uc_est2_bhrd_lim)
+# Make spatial polygon data frame
+spdf1 <- SpatialPolygonsDataFrame(clip_uc_est2_bhrd_lim, data =df)
+crs(spdf1)
+
+writeOGR(spdf1,"./outputs/clipped_shp", "clip_uc_est2_bhrd_lim", driver = "ESRI Shapefile", overwrite_layer = TRUE)
+
 
 #outro jeito de cortar####
 clip_uc_est1_bhrd_limB <-uc_est1[bhrd_lim_wgs84,]
@@ -181,6 +180,12 @@ plot(bhrd_lim_wgs84,add = TRUE, axes = TRUE)
 plot(clip_uc_est1_bhrd_limB, col = 'red')
 plot(clip_uc_est2_bhrd_limB, add = TRUE, col = 'red', axes = TRUE)
 plot(bhrd_lim_wgs84,add = TRUE, axes = TRUE)
+
+#outro teste para ver se converte:
+clip_uc_est1_bhrd_limA <- gIntersection(uc_est1, bhrd_lim_wgs84, byid = TRUE, drop_lower_td = TRUE)
+clip_uc_est1_bhrd_limA <- SpatialPolygonsDataFrame(clip_uc_est1_bhrd_limA, uc_est1@data)
+
+writeOGR(spdf,"./outputs/clipped_shp", "clip_uc_est1_bhrd_limA", driver = "ESRI Shapefile", overwrite_layer = TRUE)
 
 # save new shp ####
 
