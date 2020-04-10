@@ -36,7 +36,7 @@ uc_fed2 <- readOGR(dsn = "./Data/UC_Fed", layer = "ucsfi")
 uc_all <- readOGR(dsn = "./Data/UC_todas", layer = "ucstodas")
 
 
-#das RPPNs
+#das RPPNs - não sei se são necessárias. os arquivos acima contém RPPNs. olhar o @data.
 rppn_mg<- readOGR(dsn = "./Data/RPPN_MG", layer = "2002_MG_Reservas_Particulares_Patrimonio_Natural_pol")
 rppn_es<- readOGR(dsn = "./Data/RPPN_ES", layer = "RPPN_no_ES_28_12_2017")
 
@@ -57,7 +57,7 @@ crs(rppn_mg) #sirgas 2000
 crs(bhrd_lim)  # sirgas 2000
 crs(munic) # Albers
 
-# primeiro definir as projeçoes para os NA
+# primeiro definir as projeçoes para os NA (definir como wgs84)
 proj4string(uc_est1) <- CRS("+proj=longlat +ellps=WGS84 +datum=WGS84 +no_defs")
 proj4string(uc_est2) <- CRS("+proj=longlat +ellps=WGS84 +datum=WGS84 +no_defs")
 proj4string(uc_mun1) <- CRS("+proj=longlat +ellps=WGS84 +datum=WGS84 +no_defs")
@@ -77,7 +77,7 @@ bhrd_lim_wgs84 <- spTransform(bhrd_lim, CRS("+proj=longlat +ellps=WGS84 +datum=W
 
 munic_wgs84 <- spTransform(munic, CRS("+proj=longlat +ellps=WGS84 +datum=WGS84 +no_defs"))
 
-# Checking coordinate system ####
+# Checking coordinate system
 crs(rppn_mg_wgs84) # ok
 crs(bhrd_lim_wgs84) # ok
 crs(munic_wgs84) # ok
@@ -92,7 +92,7 @@ writeOGR(munic_wgs84,"./outputs/reproj_shp", "munic_wgs84", driver = "ESRI Shape
 
 # Clipping polygons####
 
-# jeito 1 - esse jeito de clip é bom, mas o output tem dimensões diferentes do objeto inicial. aí para writeOGR dá problema.
+# jeito 1 - esse jeito de clip é bom (corta direitinho), mas o output tem dimensões diferentes do objeto inicial. aí para writeOGR dá problema. além disso, esse método cria um SpatialPolygon (e nao um SpatialPolygonDataFrame).
 
 clip_uc_est1_bhrd_lim <- gIntersection(uc_est1, bhrd_lim_wgs84, byid = TRUE, drop_lower_td = TRUE)
 clip_uc_est2_bhrd_lim <- gIntersection(uc_est2, bhrd_lim_wgs84, byid = TRUE, drop_lower_td = TRUE)
@@ -103,109 +103,78 @@ clip_uc_fed2_bhrd_lim <- gIntersection(uc_fed2, bhrd_lim_wgs84, byid = TRUE, dro
 clip_uc_mun1_bhrd_lim <- gIntersection(uc_mun1, bhrd_lim_wgs84, byid = TRUE, drop_lower_td = TRUE)
 clip_uc_mun2_bhrd_lim <- gIntersection(uc_mun2, bhrd_lim_wgs84, byid = TRUE, drop_lower_td = TRUE)
 
-clip_uc_rppnMG_bhrd_lim <- gIntersection(rppn_mg_wgs84, bhrd_lim_wgs84, byid = TRUE, drop_lower_td = TRUE)
-#as rrpn do es o arq ta estranho e nao ta lendo. falta resolver isso.
-
 clip_uc_all_bhrd_lim <- gIntersection(uc_all, bhrd_lim_wgs84, byid = TRUE, drop_lower_td = TRUE)
 
-#saving new (clipped) shapefiles ####
-#para conseguir writeOGR, tem que:
-# é uma solução feia, mas eu não sei fazer melhor. e tb nao sei automatizar. vou fazer manualmente para cada arquivo :(
-# Make a data frame that meets the requirements.
+#outro jeito de cortar#### (clipping assim produz um objeto que é um spatialPolygoDataFrame e mantem os dados. mas o corte nao é tao exato, e fica na imagem as UCs que estao dentro e fora dos limites da bacia. mas, necessitamos dos 2 jeitos para criar um objeto final sem perder as inforamçoes do @data)
 
-#para UCs estaduais (est 1 - uso sustentável, 2 - proteção integral)
-df<- data.frame(id = getSpPPolygonsIDSlots(clip_uc_est1_bhrd_lim))
-row.names(df) <- getSpPPolygonsIDSlots(clip_uc_est1_bhrd_lim)
-# Make spatial polygon data frame
-spdf <- SpatialPolygonsDataFrame(clip_uc_est1_bhrd_lim, data =df)
-crs(spdf) #to check projection.
-
-#if wrong projection, then:
-proj4string(spdf) <- CRS("+proj=longlat +ellps=WGS84 +datum=WGS84 +no_defs")
-spdf <- spTransform(spdf , CRS("+proj=longlat +ellps=WGS84 +datum=WGS84 +no_defs"))
-
-writeOGR(spdf,"./outputs/clipped_shp", "clip_uc_est1_bhrd_lim", driver = "ESRI Shapefile", overwrite_layer = TRUE)
-
-df<- data.frame(id = getSpPPolygonsIDSlots(clip_uc_est2_bhrd_lim))
-row.names(df) <- getSpPPolygonsIDSlots(clip_uc_est2_bhrd_lim)
-# Make spatial polygon data frame
-spdf1 <- SpatialPolygonsDataFrame(clip_uc_est2_bhrd_lim, data =df)
-crs(spdf1)
-
-writeOGR(spdf1,"./outputs/clipped_shp", "clip_uc_est2_bhrd_lim", driver = "ESRI Shapefile", overwrite_layer = TRUE)
-
-
-#outro jeito de cortar####
 clip_uc_est1_bhrd_limB <-uc_est1[bhrd_lim_wgs84,]
-clip_uc_est2_bhrd_limB<-uc_est2[bhrd_lim_wgs84,]
+clip_uc_est2_bhrd_limB <-uc_est2[bhrd_lim_wgs84,]
 
-clip_uc_fed1_bhrd_lim <-uc_fed1[bhrd_lim_wgs84,]
-clip_uc_fed2_bhrd_lim<-uc_fed2[bhrd_lim_wgs84,]
+clip_uc_fed1_bhrd_limB <-uc_fed1[bhrd_lim_wgs84,]
+clip_uc_fed2_bhrd_limB <-uc_fed2[bhrd_lim_wgs84,]
 
-clip_uc_mun1_bhrd_lim <-uc_mun1[bhrd_lim_wgs84,]
-clip_uc_mun2_bhrd_lim<-uc_mun2[bhrd_lim_wgs84,]
+clip_uc_mun1_bhrd_limB <-uc_mun1[bhrd_lim_wgs84,]
+clip_uc_mun2_bhrd_limB <-uc_mun2[bhrd_lim_wgs84,]
 
-clip_rppn_mg_bhrd_lim<-rppn_mg_wgs84[bhrd_lim_wgs84,]
-#clip_rppn_es_bhrd_lim<-rppn_esxx[bhrd_lim_wgs84,] #esse arquivo ainda ta com prob
+clip_uc_all_bhrd_limB <-uc_all[bhrd_lim_wgs84,] #todas as UCs (mun, est, fed) juntas
 
-clip_uc_all_bhrd_lim<-uc_all[bhrd_lim_wgs84,] #todas as UCs (mun, est, fed) juntas
-
-
-# check clip
+#só visualizando
+# cada método de cortar resulta em um plot diferente.o 1o método corta exato. o 2o mantém as UCs que estao dentro e fora dos limite (clip...limB)
 plot(clip_uc_est1_bhrd_lim, col = 'blue')
 plot(clip_uc_est2_bhrd_lim, add = TRUE, col = 'blue', axes = TRUE)
-
-plot(clip_uc_fed1_bhrd_lim, add = TRUE, col = 'red', axes = TRUE)
-plot(clip_uc_fed2_bhrd_lim, add = TRUE, col = 'red', axes = TRUE)
-
-plot(clip_uc_mun1_bhrd_lim, add = TRUE, col = 'green', axes = TRUE)
-plot(clip_uc_mun2_bhrd_lim, add = TRUE, col = 'green', axes = TRUE)
-
-plot(clip_rppn_mg_bhrd_lim, add = TRUE, col = 'orange', axes = TRUE)
-
-plot(bhrd_lim_wgs84,add = TRUE, axes = TRUE)
-
-#plot(clip_mg_bhrd_munic, col = 'green')
-#plot(clip_es_bhrd_munic, add = TRUE, col = 'orange', axes = TRUE)
-
-#um teste
-clip_uc_est1_bhrd_lim <- gIntersection(uc_est1, bhrd_lim_wgs84, byid = TRUE, drop_lower_td = TRUE)
-clip_uc_est1_bhrd_limA <- gIntersection(uc_est1, bhrd_lim_wgs84, byid = TRUE, drop_lower_td = TRUE)
-clip_uc_est2_bhrd_limA <- gIntersection(uc_est2, bhrd_lim_wgs84, byid = TRUE, drop_lower_td = TRUE)
-
-plot(clip_uc_est1_bhrd_limA, col = 'blue')
-plot(clip_uc_est2_bhrd_limA, add = TRUE, col = 'blue', axes = TRUE)
 plot(bhrd_lim_wgs84,add = TRUE, axes = TRUE)
 
 plot(clip_uc_est1_bhrd_limB, col = 'red')
 plot(clip_uc_est2_bhrd_limB, add = TRUE, col = 'red', axes = TRUE)
 plot(bhrd_lim_wgs84,add = TRUE, axes = TRUE)
 
-#outro teste para ver se converte:
-clip_uc_est1_bhrd_limA <- gIntersection(uc_est1, bhrd_lim_wgs84, byid = TRUE, drop_lower_td = TRUE)
-clip_uc_est1_bhrd_limA <- SpatialPolygonsDataFrame(clip_uc_est1_bhrd_limA, uc_est1@data)
 
-writeOGR(spdf,"./outputs/clipped_shp", "clip_uc_est1_bhrd_limA", driver = "ESRI Shapefile", overwrite_layer = TRUE)
+#saving new (clipped) shapefiles ####
+#para conseguir writeOGR, tem que converter SpatialPolygons in SpatialPolygonDataFrame. No entanto, o metodo de clipar acima perde info, e o dataframe criado aqui nao tem as info do arquivo original (before clipping)
+# é uma solução feia, mas eu não sei fazer melhor. e tb nao sei automatizar. vou fazer manualmente para cada arquivo :(
+# Make a data frame that meets the requirements.
 
-# save new shp ####
+#para as UCs estaduais (est 1 - uso sustentável, 2 - proteção integral):
+colnames(clip_uc_est1_bhrd_lim) <- colnames(clip_uc_est1_bhrd_limB)
+row.names(clip_uc_est1_bhrd_lim)<- row.names(clip_uc_est1_bhrd_limB)
+spdf1 <- SpatialPolygonsDataFrame(clip_uc_est1_bhrd_lim, data = clip_uc_est1_bhrd_limB@data)
 
-writeOGR(clip_uc_est1_bhrd_lim,"./outputs/clipped_shp", "clip_uc_est1_bhrd_lim", driver = "ESRI Shapefile", overwrite_layer = TRUE)
-writeOGR(clip_uc_est2_bhrd_lim,"./outputs/clipped_shp", "clip_uc_est1_bhrd_lim", driver = "ESRI Shapefile", overwrite_layer = TRUE)
+writeOGR(spdf1,"./outputs/clipped_shp", "clip_uc_est1_bhrd_lim", driver = "ESRI Shapefile", overwrite_layer = TRUE)
 
-writeOGR(clip_uc_fed1_bhrd_lim,"./outputs/clipped_shp", "clip_uc_fed1_bhrd_lim", driver = "ESRI Shapefile", overwrite_layer = TRUE)
-writeOGR(clip_uc_fed2_bhrd_lim,"./outputs/clipped_shp", "clip_uc_fed2_bhrd_lim", driver = "ESRI Shapefile", overwrite_layer = TRUE)
+colnames(clip_uc_est2_bhrd_lim) <- colnames(clip_uc_est2_bhrd_limB)
+row.names(clip_uc_est2_bhrd_lim)<- row.names(clip_uc_est2_bhrd_limB)
+spdf2 <- SpatialPolygonsDataFrame(clip_uc_est2_bhrd_lim, data = clip_uc_est2_bhrd_limB@data)
 
-writeOGR(clip_uc_mun1_bhrd_lim,"./outputs/clipped_shp", "clip_uc_mun1_bhrd_lim", driver = "ESRI Shapefile", overwrite_layer = TRUE)
-writeOGR(clip_uc_mun2_bhrd_lim,"./outputs/clipped_shp", "clip_uc_mun2_bhrd_lim", driver = "ESRI Shapefile", overwrite_layer = TRUE)
+writeOGR(spdf2,"./outputs/clipped_shp", "clip_uc_est2_bhrd_lim", driver = "ESRI Shapefile", overwrite_layer = TRUE)
 
-writeOGR(clip_uc_all_bhrd_lim,"./outputs/clipped_shp", "clip_uc_all_bhrd_lim", driver = "ESRI Shapefile", overwrite_layer = TRUE)
+# para as UCs federais
+colnames(clip_uc_fed1_bhrd_lim) <- colnames(clip_uc_fed1_bhrd_limB)
+row.names(clip_uc_fed1_bhrd_lim)<- row.names(clip_uc_fed1_bhrd_limB)
+spdf3 <- SpatialPolygonsDataFrame(clip_uc_fed1_bhrd_lim, data = clip_uc_fed1_bhrd_limB@data)
+writeOGR(spdf3,"./outputs/clipped_shp", "clip_uc_fed1_bhrd_lim", driver = "ESRI Shapefile", overwrite_layer = TRUE)
 
-writeOGR(clip_rppn_mg_bhrd_lim,"./outputs/clipped_shp", "clip_rppn_mg_bhrd_lim", driver = "ESRI Shapefile", overwrite_layer = TRUE)
+colnames(clip_uc_fed2_bhrd_lim) <- colnames(clip_uc_fed2_bhrd_limB)
+row.names(clip_uc_fed2_bhrd_lim)<- row.names(clip_uc_fed2_bhrd_limB)
+spdf4 <- SpatialPolygonsDataFrame(clip_uc_fed2_bhrd_lim, data = clip_uc_fed2_bhrd_limB@data)
+writeOGR(spdf4,"./outputs/clipped_shp", "clip_uc_fed2_bhrd_lim", driver = "ESRI Shapefile", overwrite_layer = TRUE)
 
-class (clip_uc_est1_bhrd_lim)
-# Remove unecessary files ####
-# good to get more space if you'll continue the analysis in the sequence
-#rm(mg)
-#rm(es)
-#rm(bhrd)
-#rm(munic)
+# para as UCs municipais
+colnames(clip_uc_mun1_bhrd_lim) <- colnames(clip_uc_mun1_bhrd_limB)
+row.names(clip_uc_mun1_bhrd_lim)<- row.names(clip_uc_mun1_bhrd_limB)
+spdf5 <- SpatialPolygonsDataFrame(clip_uc_fed1_bhrd_lim, data = clip_uc_mun1_bhrd_limB@data)
+writeOGR(spdf5,"./outputs/clipped_shp", "clip_uc_mun1_bhrd_lim", driver = "ESRI Shapefile", overwrite_layer = TRUE)
+
+colnames(clip_uc_mun2_bhrd_lim) <- colnames(clip_uc_mun2_bhrd_limB)
+row.names(clip_uc_mun2_bhrd_lim)<- row.names(clip_uc_mun2_bhrd_limB)
+spdf6 <- SpatialPolygonsDataFrame(clip_uc_mun2_bhrd_lim, data = clip_uc_mun2_bhrd_limB@data)
+writeOGR(spdf6,"./outputs/clipped_shp", "clip_uc_mun2_bhrd_lim", driver = "ESRI Shapefile", overwrite_layer = TRUE)
+
+#para todas as UCs (sem identificar se é municipal, estadual ou federal)
+colnames(clip_uc_all_bhrd_lim) <- colnames(clip_uc_all_bhrd_limB)
+row.names(clip_uc_all_bhrd_lim)<- row.names(clip_uc_all_bhrd_limB)
+spdf7 <- SpatialPolygonsDataFrame(clip_uc_all_bhrd_lim, data = clip_uc_all_bhrd_limB@data)
+writeOGR(spdf7,"./outputs/clipped_shp", "clip_uc_all_bhrd_lim", driver = "ESRI Shapefile", overwrite_layer = TRUE)
+
+
+
+
