@@ -92,41 +92,69 @@ writeOGR(munic_wgs84,"./outputs/reproj_shp", "munic_wgs84", driver = "ESRI Shape
 
 # Clipping polygons####
 
-# jeito 1 - esse jeito de clip é bom (corta direitinho), mas o output tem dimensões diferentes do objeto inicial. aí para writeOGR dá problema. além disso, esse método cria um SpatialPolygon (e nao um SpatialPolygonDataFrame).
+# jeito 1 - usando a funçao crop do pacote raster. esse jeito corta direitinho e cria um SpatialPolygonDataFrame. mas UCs que estão dentro e fora dos limites se perdem aqui (olhar jeito 2).
 
-clip_uc_est1_bhrd_lim <- gIntersection(uc_est1, bhrd_lim_wgs84, byid = TRUE, drop_lower_td = TRUE)
-clip_uc_est2_bhrd_lim <- gIntersection(uc_est2, bhrd_lim_wgs84, byid = TRUE, drop_lower_td = TRUE)
+crop_est1_bhrd <- crop(uc_est1, bhrd_lim_wgs84)
+crop_est2_bhrd <- crop(uc_est2, bhrd_lim_wgs84)
 
-clip_uc_fed1_bhrd_lim <- gIntersection(uc_fed1, bhrd_lim_wgs84, byid = TRUE, drop_lower_td = TRUE)
-clip_uc_fed2_bhrd_lim <- gIntersection(uc_fed2, bhrd_lim_wgs84, byid = TRUE, drop_lower_td = TRUE)
+crop_fed1_bhrd <- crop(uc_fed1, bhrd_lim_wgs84)
+crop_fed2_bhrd <- crop(uc_fed2, bhrd_lim_wgs84)
 
-clip_uc_mun1_bhrd_lim <- gIntersection(uc_mun1, bhrd_lim_wgs84, byid = TRUE, drop_lower_td = TRUE)
-clip_uc_mun2_bhrd_lim <- gIntersection(uc_mun2, bhrd_lim_wgs84, byid = TRUE, drop_lower_td = TRUE)
+crop_mun1_bhrd <- crop(uc_mun1, bhrd_lim_wgs84)
+crop_mun2_bhrd <- crop(uc_mun2, bhrd_lim_wgs84)
 
-clip_uc_all_bhrd_lim <- gIntersection(uc_all, bhrd_lim_wgs84, byid = TRUE, drop_lower_td = TRUE)
+crop_all_bhrd <- crop(uc_all, bhrd_lim_wgs84)
 
-#outro jeito de cortar#### (clipping assim produz um objeto que é um spatialPolygoDataFrame e mantem os dados. mas o corte nao é tao exato, e fica na imagem as UCs que estao dentro e fora dos limites da bacia. mas, necessitamos dos 2 jeitos para criar um objeto final sem perder as inforamçoes do @data)
+#outro jeito de cortar####
+#Aqui o corte nao é tao exato: ele mantem as UCs que estao dentro e fora dos limites da bacia. mas, necessitamos dos 2 jeitos para criar uma coluna com a diferença da área)
 
-clip_uc_est1_bhrd_limB <-uc_est1[bhrd_lim_wgs84,]
-clip_uc_est2_bhrd_limB <-uc_est2[bhrd_lim_wgs84,]
+crop_est1_B <-uc_est1[bhrd_lim_wgs84,]
+crop_est2_B <-uc_est2[bhrd_lim_wgs84,]
 
-clip_uc_fed1_bhrd_limB <-uc_fed1[bhrd_lim_wgs84,]
-clip_uc_fed2_bhrd_limB <-uc_fed2[bhrd_lim_wgs84,]
+crop_fed1_B <-uc_fed1[bhrd_lim_wgs84,]
+crop_fed2_B <-uc_fed2[bhrd_lim_wgs84,]
 
-clip_uc_mun1_bhrd_limB <-uc_mun1[bhrd_lim_wgs84,]
-clip_uc_mun2_bhrd_limB <-uc_mun2[bhrd_lim_wgs84,]
+crop_mun1_B <-uc_mun1[bhrd_lim_wgs84,]
+crop_mun2_B <-uc_mun2[bhrd_lim_wgs84,]
 
-clip_uc_all_bhrd_limB <-uc_all[bhrd_lim_wgs84,] #todas as UCs (mun, est, fed) juntas
+crop_all_B <-uc_all[bhrd_lim_wgs84,] #todas as UCs (mun, est, fed) juntas
 
-#só visualizando
-# cada método de cortar resulta em um plot diferente.o 1o método corta exato. o 2o mantém as UCs que estao dentro e fora dos limite (clip...limB)
-plot(clip_uc_est1_bhrd_lim, col = 'blue')
-plot(clip_uc_est2_bhrd_lim, add = TRUE, col = 'blue', axes = TRUE)
-plot(bhrd_lim_wgs84,add = TRUE, axes = TRUE)
+#checking/visualizando
+# cada método de cortar resulta em um plot diferente.o 1o método corta exato. o 2o mantém as UCs que estao dentro e fora dos limite:
 
-plot(clip_uc_est1_bhrd_limB, col = 'red')
-plot(clip_uc_est2_bhrd_limB, add = TRUE, col = 'red', axes = TRUE)
-plot(bhrd_lim_wgs84,add = TRUE, axes = TRUE)
+plot(bhrd_lim_wgs84)
+plot(crop_est1_bhrd, add = TRUE, col = 'blue', axes = TRUE)
+plot(crop_est2_bhrd, add = TRUE, col = 'blue', axes = TRUE)
+
+plot(bhrd_lim_wgs84)
+plot(crop_est1_B, add = TRUE, col = 'red', axes = TRUE)
+plot(crop_est2_B, add = TRUE, col = 'red', axes = TRUE)
+
+
+#calculando a diferença das áreas - usando a função area do pacote raster.
+#primeiro calcular a área dos poligonos de cada arquivo e salvando uma coluna com a area de cada UC no dataframe de cada arquivo:
+crop_est1_bhrd$area <- area(crop_est1_bhrd)
+crop_est2_bhrd$area <- area(crop_est2_bhrd)
+
+crop_fed1_bhrd$area <- area(crop_fed1_bhrd)
+crop_fed2_bhrd$area <- area(crop_fed2_bhrd)
+
+crop_mun1_bhrd$area <- area(crop_mun1_bhrd)
+crop_mun2_bhrd$area <- area(crop_mun2_bhrd)
+
+crop_all_bhrd$area <- area(crop_all_bhrd)
+
+#salvando uma coluna com a diferença da area (do jeito de cortar que nao corta exato - area após corte exato):
+crop_est1_bhrd$dif_area <- (area(crop_est1_B) - area(crop_est1_bhrd))
+crop_est2_bhrd$dif_area <- (area(crop_est2_B) - area(crop_est2_bhrd))
+
+crop_fed1_bhrd$dif_area <- (area(crop_fed1_B) - area(crop_fed1_bhrd))
+crop_fed2_bhrd$dif_area <- (area(crop_fed2_B) - area(crop_fed2_bhrd))
+
+crop_mun1_bhrd$dif_area <- (area(crop_mun1_B) - area(crop_mun1_bhrd))
+crop_mun2_bhrd$dif_area <- (area(crop_mun2_B) - area(crop_mun2_bhrd))
+
+crop_all_bhrd$dif_area <- (area(crop_all_B) - area(crop_all_bhrd))
 
 
 #saving new (clipped) shapefiles ####
