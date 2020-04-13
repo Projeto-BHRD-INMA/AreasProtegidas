@@ -11,16 +11,16 @@ library(raster)
 library(rgeos)
 
 # Loading shp file ####
-fed1 <- readOGR(dsn = "./outputs/clipped_shp", layer = "clip_uc_fed1_bhrd_lim")
-fed2 <- readOGR(dsn = "./outputs/clipped_shp", layer = "clip_uc_fed2_bhrd_lim")
+fed1 <- readOGR(dsn = "./outputs/clipped_shp", layer = "crop_fed1_bhrd")
+fed2 <- readOGR(dsn = "./outputs/clipped_shp", layer = "crop_fed2_bhrd")
 
-est1 <- readOGR(dsn = "./outputs/clipped_shp", layer = "clip_uc_est1_bhrd_lim")
-est2 <- readOGR(dsn = "./outputs/clipped_shp", layer = "clip_uc_est2_bhrd_lim")
+est1 <- readOGR(dsn = "./outputs/clipped_shp", layer = "crop_est1_bhrd")
+est2 <- readOGR(dsn = "./outputs/clipped_shp", layer = "crop_est2_bhrd")
 
-mun1 <- readOGR(dsn = "./outputs/clipped_shp", layer = "clip_uc_mun1_bhrd_lim")
-mun2 <- readOGR(dsn = "./outputs/clipped_shp", layer = "clip_uc_mun2_bhrd_lim")
+mun1 <- readOGR(dsn = "./outputs/clipped_shp", layer = "crop_mun1_bhrd")
+mun2 <- readOGR(dsn = "./outputs/clipped_shp", layer = "crop_mun2_bhrd")
 
-all <- readOGR(dsn = "./outputs/clipped_shp", layer = "clip_uc_all_bhrd_lim")
+all <- readOGR(dsn = "./outputs/clipped_shp", layer = "crop_all_bhrd")
 
 bhrd <- readOGR(dsn = "./outputs/reproj_shp", layer = "bhrd_lim_wgs84")
 munic <- readOGR(dsn = "./outputs/reproj_shp", layer = "munic_wgs84")
@@ -41,5 +41,6 @@ plot(mun2, add = TRUE, col = 'green', axes = TRUE)
 plot(bhrd)
 plot(all, add = TRUE,  col = 'orange', axes = TRUE)
 
-
+plot(munic)
+plot(all, add = TRUE,  col = 'orange', axes = TRUE)
 

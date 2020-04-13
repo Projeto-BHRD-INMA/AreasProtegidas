@@ -158,50 +158,21 @@ crop_all_bhrd$dif_area <- (area(crop_all_B) - area(crop_all_bhrd))
 
 
 #saving new (clipped) shapefiles ####
-#para conseguir writeOGR, tem que converter SpatialPolygons in SpatialPolygonDataFrame. No entanto, o metodo de clipar acima perde info, e o dataframe criado aqui nao tem as info do arquivo original (before clipping)
-# é uma solução feia, mas eu não sei fazer melhor. e tb nao sei automatizar. vou fazer manualmente para cada arquivo :(
-# Make a data frame that meets the requirements.
+# lembrando que  1 - uso sustentável, 2 - proteção integral:
+writeOGR(crop_est1_bhrd,"./outputs/clipped_shp", "crop_est1_bhrd", driver = "ESRI Shapefile", overwrite_layer = TRUE)
 
-#para as UCs estaduais (est 1 - uso sustentável, 2 - proteção integral):
-colnames(clip_uc_est1_bhrd_lim) <- colnames(clip_uc_est1_bhrd_limB)
-row.names(clip_uc_est1_bhrd_lim)<- row.names(clip_uc_est1_bhrd_limB)
-spdf1 <- SpatialPolygonsDataFrame(clip_uc_est1_bhrd_lim, data = clip_uc_est1_bhrd_limB@data)
+writeOGR(crop_est2_bhrd,"./outputs/clipped_shp", "crop_est2_bhrd", driver = "ESRI Shapefile", overwrite_layer = TRUE)
 
-writeOGR(spdf1,"./outputs/clipped_shp", "clip_uc_est1_bhrd_lim", driver = "ESRI Shapefile", overwrite_layer = TRUE)
+writeOGR(crop_fed1_bhrd,"./outputs/clipped_shp", "crop_fed1_bhrd", driver = "ESRI Shapefile", overwrite_layer = TRUE)
 
-colnames(clip_uc_est2_bhrd_lim) <- colnames(clip_uc_est2_bhrd_limB)
-row.names(clip_uc_est2_bhrd_lim)<- row.names(clip_uc_est2_bhrd_limB)
-spdf2 <- SpatialPolygonsDataFrame(clip_uc_est2_bhrd_lim, data = clip_uc_est2_bhrd_limB@data)
+writeOGR(crop_fed2_bhrd,"./outputs/clipped_shp", "crop_fed2_bhrd", driver = "ESRI Shapefile", overwrite_layer = TRUE)
 
-writeOGR(spdf2,"./outputs/clipped_shp", "clip_uc_est2_bhrd_lim", driver = "ESRI Shapefile", overwrite_layer = TRUE)
+writeOGR(crop_mun1_bhrd,"./outputs/clipped_shp", "crop_mun1_bhrd", driver = "ESRI Shapefile", overwrite_layer = TRUE)
 
-# para as UCs federais
-colnames(clip_uc_fed1_bhrd_lim) <- colnames(clip_uc_fed1_bhrd_limB)
-row.names(clip_uc_fed1_bhrd_lim)<- row.names(clip_uc_fed1_bhrd_limB)
-spdf3 <- SpatialPolygonsDataFrame(clip_uc_fed1_bhrd_lim, data = clip_uc_fed1_bhrd_limB@data)
-writeOGR(spdf3,"./outputs/clipped_shp", "clip_uc_fed1_bhrd_lim", driver = "ESRI Shapefile", overwrite_layer = TRUE)
+writeOGR(crop_mun2_bhrd,"./outputs/clipped_shp", "crop_mun2_bhrd", driver = "ESRI Shapefile", overwrite_layer = TRUE)
 
-colnames(clip_uc_fed2_bhrd_lim) <- colnames(clip_uc_fed2_bhrd_limB)
-row.names(clip_uc_fed2_bhrd_lim)<- row.names(clip_uc_fed2_bhrd_limB)
-spdf4 <- SpatialPolygonsDataFrame(clip_uc_fed2_bhrd_lim, data = clip_uc_fed2_bhrd_limB@data)
-writeOGR(spdf4,"./outputs/clipped_shp", "clip_uc_fed2_bhrd_lim", driver = "ESRI Shapefile", overwrite_layer = TRUE)
+writeOGR(crop_all_bhrd,"./outputs/clipped_shp", "crop_all_bhrd", driver = "ESRI Shapefile", overwrite_layer = TRUE)
 
-# para as UCs municipais
-colnames(clip_uc_mun1_bhrd_lim) <- colnames(clip_uc_mun1_bhrd_limB)
-row.names(clip_uc_mun1_bhrd_lim)<- row.names(clip_uc_mun1_bhrd_limB)
-spdf5 <- SpatialPolygonsDataFrame(clip_uc_fed1_bhrd_lim, data = clip_uc_mun1_bhrd_limB@data)
-writeOGR(spdf5,"./outputs/clipped_shp", "clip_uc_mun1_bhrd_lim", driver = "ESRI Shapefile", overwrite_layer = TRUE)
-
-colnames(clip_uc_mun2_bhrd_lim) <- colnames(clip_uc_mun2_bhrd_limB)
-row.names(clip_uc_mun2_bhrd_lim)<- row.names(clip_uc_mun2_bhrd_limB)
-spdf6 <- SpatialPolygonsDataFrame(clip_uc_mun2_bhrd_lim, data = clip_uc_mun2_bhrd_limB@data)
-writeOGR(spdf6,"./outputs/clipped_shp", "clip_uc_mun2_bhrd_lim", driver = "ESRI Shapefile", overwrite_layer = TRUE)
-
-#para todas as UCs (sem identificar se é municipal, estadual ou federal)
-colnames(clip_uc_all_bhrd_lim) <- colnames(clip_uc_all_bhrd_limB)
-row.names(clip_uc_all_bhrd_lim)<- row.names(clip_uc_all_bhrd_limB)
-spdf7 <- SpatialPolygonsDataFrame(clip_uc_all_bhrd_lim, data = clip_uc_all_bhrd_limB@data)
-writeOGR(spdf7,"./outputs/clipped_shp", "clip_uc_all_bhrd_lim", driver = "ESRI Shapefile", overwrite_layer = TRUE)
 
 
 
