@@ -132,7 +132,7 @@ plot(crop_est2_B, add = TRUE, col = 'red', axes = TRUE)
 
 
 #calculando a diferença das áreas - usando a função area do pacote raster.
-#primeiro calcular a área dos poligonos de cada arquivo e salvando uma coluna com a area de cada UC no dataframe de cada arquivo:
+#primeiro extrair a área dos poligonos de cada arquivo e salvar em uma coluna no dataframe de cada arquivo:
 crop_est1_bhrd$area <- area(crop_est1_bhrd)
 crop_est2_bhrd$area <- area(crop_est2_bhrd)
 
@@ -144,7 +144,7 @@ crop_mun2_bhrd$area <- area(crop_mun2_bhrd)
 
 crop_all_bhrd$area <- area(crop_all_bhrd)
 
-#salvando uma coluna com a diferença da area (do jeito de cortar que nao corta exato - area após corte exato):
+#salvar uma coluna com a diferença da area (area a partir do jeito que nao corta exato - area após corte exato):
 crop_est1_bhrd$dif_area <- (area(crop_est1_B) - area(crop_est1_bhrd))
 crop_est2_bhrd$dif_area <- (area(crop_est2_B) - area(crop_est2_bhrd))
 
