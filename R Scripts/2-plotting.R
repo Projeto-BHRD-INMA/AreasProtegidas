@@ -25,7 +25,7 @@ all <- readOGR(dsn = "./outputs/clipped_shp", layer = "crop_all_bhrd")
 bhrd <- readOGR(dsn = "./outputs/reproj_shp", layer = "bhrd_lim_wgs84")
 munic <- readOGR(dsn = "./outputs/reproj_shp", layer = "munic_wgs84")
 
-# plots ####
+# regular plot ####
 plot(bhrd)
 plot(fed1, add = TRUE,  col = 'blue', axes = TRUE)
 plot(fed2, add = TRUE, col = 'blue', axes = TRUE)
@@ -45,13 +45,14 @@ plot(all, add = TRUE,  col = 'orange', axes = TRUE)
 plot(munic)
 plot(all, add = TRUE,  col = 'orange', axes = TRUE)
 
-#### vamos tentar unir todas as UCs
+# vamos unir as UCs ####
 
 union_fed <- union(fed1, fed2)
 union_est <- union(est1, est2)
 union_mun <- union(mun1, mun2)
 
-#passos para conseguir usar o ggplot. shps need to be transformed for presentation by ggplot2.
+#ggplot2####
+#passos para conseguir usar o ggplot. shps need to be transformed for presentation by ggplot2
 
 union_fed@data$id = rownames(union_fed@data)
 fed.points = fortify(union_fed, region="id")
