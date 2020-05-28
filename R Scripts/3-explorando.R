@@ -12,16 +12,16 @@ library(raster)
 library(rgeos)
 
 # Loading shp file ####
-fed1 <- readOGR(dsn = "./outputs/clipped_shp", layer = "crop_fed1_bhrd")
-fed2 <- readOGR(dsn = "./outputs/clipped_shp", layer = "crop_fed2_bhrd")
+fed1 <- readOGR(dsn = "./outputs/clipped_shp", layer = "crop_fed1")
+fed2 <- readOGR(dsn = "./outputs/clipped_shp", layer = "crop_fed2")
 
-est1 <- readOGR(dsn = "./outputs/clipped_shp", layer = "crop_est1_bhrd")
-est2 <- readOGR(dsn = "./outputs/clipped_shp", layer = "crop_est2_bhrd")
+est1 <- readOGR(dsn = "./outputs/clipped_shp", layer = "crop_est1")
+est2 <- readOGR(dsn = "./outputs/clipped_shp", layer = "crop_est2")
 
-mun1 <- readOGR(dsn = "./outputs/clipped_shp", layer = "crop_mun1_bhrd")
-mun2 <- readOGR(dsn = "./outputs/clipped_shp", layer = "crop_mun2_bhrd")
+mun1 <- readOGR(dsn = "./outputs/clipped_shp", layer = "crop_mun1")
+mun2 <- readOGR(dsn = "./outputs/clipped_shp", layer = "crop_mun2")
 
-all <- readOGR(dsn = "./outputs/clipped_shp", layer = "crop_all_bhrd")
+all <- readOGR(dsn = "./outputs/clipped_shp", layer = "crop_all")
 
 bhrd <- readOGR(dsn = "./outputs/reproj_shp", layer = "bhrd_lim_wgs84")
 munic <- readOGR(dsn = "./outputs/reproj_shp", layer = "munic_wgs84")
@@ -72,6 +72,7 @@ all_2$areabacia <-area(bhrd)/1e+6 #para add a area total da bacia
 #dividir por 1e+6 para converter de m2 para km2
 
 #figuras####
+
 #grafico de ponto
 
 g1<-ggplot(data=all_1, aes(x=ESFERA5, y=mean)) + # width faz a barra ficar mais fina (ou grossa)
@@ -101,12 +102,16 @@ all_2
 
 tipo <- c("federal", "federal", "estadual","estadual" , "municipal","municipal")
 tipo1 <- as.factor(tipo)
+
 value <- c("760","82615", "1582","82615", "1471","82615")
 value1 <- as.numeric(value)
+
 tipoarea <- c("areaUC","areatotal","areaUC","areatotal","areaUC","areatotal")
 tipoarea1 <- as.factor(tipoarea)
+
 class(value1)
 class(tipo1)
+
 data <- data.frame(tipo1, value1, tipoarea1)
 
 
