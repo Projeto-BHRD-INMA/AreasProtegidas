@@ -115,7 +115,7 @@ r3$areatot <- sum(r3$sum)
 #grafico de ponto
 
 g1<-ggplot(data=r1, aes(x=uph, y=mean)) + # width faz a barra ficar mais fina (ou grossa)
-  geom_point(position=position_dodge(.5), size=2, shape=21, fill="white")+
+  geom_point(position=position_dodge(.5), size=1, shape=21, fill="white")+
   geom_errorbar(aes(ymin=mean-se, ymax=mean+se),
                 width=.2, # Width of the error bars
                 position=position_dodge(.5))+
@@ -127,7 +127,7 @@ g1<-ggplot(data=r1, aes(x=uph, y=mean)) + # width faz a barra ficar mais fina (o
                    ))+
   theme_classic() +
   theme (axis.text = element_text(size = 7), axis.title=element_text(size=8),
-         axis.text.x=element_text(size = 8),
+         axis.text.x=element_text(size = 7, angle = 90),
          panel.grid.major=element_blank(),
          panel.grid.minor=element_blank(), panel.border=element_blank()) +
   theme(axis.line.x = element_line(color="black", size = 0), ## to write x and y axis again, ja que removi da borda
@@ -146,7 +146,7 @@ g2 <- ggplot(data = r3, aes(x=uph, y=N, width=.5)) + # width faz a barra ficar m
                    ))+
   theme_classic() +
   theme (axis.text = element_text(size = 7), axis.title=element_text(size=8),
-         axis.text.x=element_text(size = 8),
+         axis.text.x=element_blank(),
          panel.grid.major=element_blank(),
          panel.grid.minor=element_blank(), panel.border=element_blank()) +
   theme(axis.line.x = element_line(color="black", size = 0), ## to write x and y axis again, ja que removi da borda
@@ -154,6 +154,10 @@ g2 <- ggplot(data = r3, aes(x=uph, y=N, width=.5)) + # width faz a barra ficar m
   theme(legend.position="none")
 
 
+# salvando figuras #
+png("figs/figura10.png", res = 300, width = 800, height = 1200)
+grid.arrange(g2, g1, ncol=1)
+dev.off()
 
 # create a dataset para fazer outras figuras ####
 r3 #a coluna sum é area total ocupada por UCs
@@ -178,27 +182,34 @@ g3 <- ggplot(data= data2, aes(x=uph1, y=value1, fill = tipoarea1,  width=.5)) + 
   geom_bar(stat="identity", position = position_dodge())+
   scale_fill_manual(values=c('lightgray','black'))+
   xlab("") +
-  ylab("área total e área ocupada por UCs (ha)") +
+  ylab("Área total da UPH e área ocupada por UCs (ha)") +
   theme_classic() +
-  theme (axis.text = element_text(size = 7), axis.title=element_text(size=8),
-         axis.text.x=element_text(size=7),
+  theme (axis.text = element_text(size = 6), axis.title=element_text(size=6),
+         axis.text.x=element_text(size=7, angle = 90),
          panel.grid.major=element_blank(),
          panel.grid.minor=element_blank(), panel.border=element_blank()) +
   theme(axis.line.x = element_line(color="black", size = 0), ## to write x and y axis again, ja que removi da borda
         axis.line.y = element_line(color="black", size = 0))+
   theme(legend.position="none")
 
+#salvando outra fig
+png("figs/figura09.png", res = 300, width = 900, height = 800)
+grid.arrange(g3)
+dev.off()
+
 #ou stacked barplots#
 g4 <-ggplot(data= data2, aes(x=uph1, y=value1, fill = tipoarea1,  width=.5)) + # width faz a barra ficar mais fina (ou grossa)
   geom_bar(position="stack", stat="identity")+
   scale_fill_manual(values=c('lightgray','black'))+
   xlab("") +
-  ylab("área UC e área total UPH (ha)") +
+  ylab("Área UC e área total UPH (ha)") +
   theme_classic() +
-  theme (axis.text = element_text(size = 7), axis.title=element_text(size=8),
-         axis.text.x=element_text(size=7),
+  theme (axis.text = element_text(size = 7), axis.title=element_text(size=6),
+         axis.text.x=element_text(size=7, angle = 90),
          panel.grid.major=element_blank(),
          panel.grid.minor=element_blank(), panel.border=element_blank()) +
   theme(axis.line.x = element_line(color="black", size = 0), ## to write x and y axis again, ja que removi da borda
         axis.line.y = element_line(color="black", size = 0))+
   theme(legend.position="none")
+
+
