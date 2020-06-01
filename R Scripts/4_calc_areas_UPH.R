@@ -1,13 +1,15 @@
 
 #########################################################################
-# Calcular áreas de UCs por Unidade de Planejamento Hídrico na BHRD
+# Calcular áreas de UCs por Unidade de Planejamento Hídrico (UPH) na BHRD
 # Talita Zupo
 # Date: 28/05/2020
 ##########################################################################
 
 library(raster)
 library(rgdal)
-library(dplyr)
+library(rgeos)
+library(plyr)
+#library(dplyr)
 library(data.table)
 
 # load mining and mask shapefiles
@@ -16,7 +18,41 @@ all <- readOGR(dsn = "./outputs/clipped_shp", layer = "crop_all",
 
 mask_bhrd <- readOGR("./outputs/reproj_shp", layer = "mask_bhrd_albers",
                 encoding = 'UTF-8')
+#plot UCs####
+plot(mask_bhrd)
+plot(all, add = TRUE, col = 'orange', axes = TRUE)
 
+png("figs/mapa1.png", res = 300, width = 1800, height = 1000)
+grid.arrange(f1)
+dev.off()
+
+#### plots com ggplot2####
+library(ggplot2)
+library(gridExtra)
+library(maptools)
+
+#passos para conseguir usar o ggplot. shps need to be transformed for presentation by ggplot2
+
+all@data$id = rownames(all@data)
+all.points = fortify(all, region="id")
+todos.df = join(all.points, all@data, by="id")
+
+mask_bhrd@data$id = rownames(mask_bhrd@data)
+mask_bhrd.points = fortify(mask_bhrd, region="id")
+mask_bhrd.df = join(mask_bhrd.points, mask_bhrd@data, by="id")
+
+map1 <- ggplot() +
+  geom_polygon(data = mask_bhrd, aes(long, lat, group = group), fill = 'grey90') +
+  geom_polygon(data = all.points, aes(long, lat, group = group),
+               fill = "grey30",
+               alpha = 0.7) +
+    theme_void()
+
+png("figs/figura11.png", res = 300, width = 1800, height = 1000)
+grid.arrange(map1)
+dev.off()
+
+#DIVIDINDO POR UPH - unidade de planejamento hidrico
 # crop areas in each polygon of the mask (nos poligonos da Bacia do Rio Doce)
 
 crop1 <- crop(all, mask_bhrd[6,])#Para Piranga
@@ -83,6 +119,7 @@ data <- rbind(crop1.df, crop2.df, crop3.df, crop4.df, crop5.df, crop6.df, crop_b
 
 
 # RESUMIR DADOS####
+
 #ainda nao entendi pq so funciona com uma outra coluna tipo essa... mas enfim
 data$unidades <- c(rep("uc", 81))
 
@@ -109,9 +146,14 @@ r3 <- ddply(data, c("uph", "areamask"), summarise,
 )
 r3$areatot <- sum(r3$sum)
 
+r4 <- ddply(data, c("uph", "ESFERA5"), summarise,
+            N    = length(area),
+            mean = mean(area),
+            sd   = sd(area),
+            se   = sd / sqrt(N)
+)
 
 #### FIGURAS ####
-
 #grafico de ponto
 
 g1<-ggplot(data=r1, aes(x=uph, y=mean)) + # width faz a barra ficar mais fina (ou grossa)
@@ -135,7 +177,7 @@ g1<-ggplot(data=r1, aes(x=uph, y=mean)) + # width faz a barra ficar mais fina (o
   theme(legend.position="none")
 
 
-#Figura do número de UCs..
+#Figura do número de UCs..sem dividir por esferas (municpial, estadual, federal)
 g2 <- ggplot(data = r3, aes(x=uph, y=N, width=.5)) + # width faz a barra ficar mais fina (ou grossa)
   geom_bar(stat = "identity")+
   xlab("") +
@@ -153,13 +195,41 @@ g2 <- ggplot(data = r3, aes(x=uph, y=N, width=.5)) + # width faz a barra ficar m
         axis.line.y = element_line(color="black", size = 0))+
   theme(legend.position="none")
 
+#stacked barplots (numero de UCS para cada UPH, dividindo por esferas - mun, est, fed)
+g2b <- ggplot(data = r4, aes(x=uph, y=N, fill = ESFERA5, width=.5)) + # width faz a barra ficar mais fina (ou grossa)
+  geom_bar(position="stack", stat="identity")+
+  scale_fill_manual(values=c('#CCCCCC', '#666666', '#000000'))+
+   xlab("") +
+  ylab("Número de UCs") +
+  scale_y_continuous(limits = c(0, 25),breaks=0:20*5) +
+  scale_x_discrete(limits=c("PIRANGA","PIRACICABA (MG)", "SANTO ANTÔNIO", "SUAÇUÍ GRANDE", "CARATINGA", "MANHUAÇU", "BAIXO DOCE" ),
+                   labels=c("Piranga","Piracicaba", "Sto Antonio", "Suaçui Gde", "Caratinga", "Manhuaçu", "Baixo Doce"
+                   ))+
+  theme_classic() +
+  theme (axis.text = element_text(size = 7), axis.title=element_text(size=8),
+         axis.text.x=element_text(size = 7, angle = 90),
+         panel.grid.major=element_blank(),
+         panel.grid.minor=element_blank(), panel.border=element_blank()) +
+  theme(axis.line.x = element_line(color="black", size = 0), ## to write x and y axis again, ja que removi da borda
+        axis.line.y = element_line(color="black", size = 0))+
+  theme(legend.position="none")
+g2b<-g2b+ labs(fill ="")
 
-# salvando figuras #
-png("figs/figura10.png", res = 300, width = 800, height = 1200)
-grid.arrange(g2, g1, ncol=1)
+# salvando figuras ####
+png("figs/figura10a.png", res = 300, width = 1200, height = 1000)
+grid.arrange(g1, ncol=1)
 dev.off()
 
-# create a dataset para fazer outras figuras ####
+#para usar labels dentro do plot - usando label.x e label.y
+#para colocar a legenda da figura g2b.
+library(ggpubr)
+
+png("figs/figura10B.png", res = 300, width = 1500, height = 1000)
+ggarrange(g2b, common.legend = TRUE, legend = "right")
+dev.off()
+
+
+# create a dataset para fazer outras figuras - fig de AREA ocupada ####
 r3 #a coluna sum é area total ocupada por UCs
 
 uph <- c("Piranga","Piranga","Piracicaba", "Piracicaba", "Sto Antonio","Sto Antonio", "Suaçui Gde", "Suaçui Gde","Caratinga", "Caratinga", "Manhuaçu","Manhuaçu", "Baixo Doce","Baixo Doce")
@@ -172,7 +242,7 @@ tipoarea <- c("areaUC","areatotal","areaUC","areatotal","areaUC","areatotal", "a
 tipoarea1 <- as.factor(tipoarea)
 
 class(value1)
-class(tipo1)
+class(tipoarea1)
 
 data2 <- data.frame(uph1, value1, tipoarea1)
 
@@ -212,4 +282,7 @@ g4 <-ggplot(data= data2, aes(x=uph1, y=value1, fill = tipoarea1,  width=.5)) + #
         axis.line.y = element_line(color="black", size = 0))+
   theme(legend.position="none")
 
-
+#salvando outra fig
+png("figs/figura09b.png", res = 300, width = 900, height = 800)
+grid.arrange(g4)
+dev.off()
